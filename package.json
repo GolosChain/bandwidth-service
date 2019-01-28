@@ -1,0 +1,40 @@
+{
+  "name": "badwidth-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./src/Main.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "author": "golos.io",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "gls-core-service": "^2.16.1"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "tabWidth": 4,
+    "semi": true,
+    "trailingComma": "es5",
+    "printWidth": 100,
+    "overrides": [
+      {
+        "files": [
+          "*.yml",
+          "*.json"
+        ],
+        "options": {
+          "tabWidth": 2
+        }
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GolosChain/bandwidth-service.git"
+  },
+  "bugs": {
+    "url": "https://github.com/GolosChain/bandwidth-service/issues"
+  },
+  "homepage": "https://github.com/GolosChain/bandwidth-service#readme"
+}
