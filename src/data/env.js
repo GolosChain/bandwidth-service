@@ -1,0 +1,10 @@
+const env = process.env;
+
+module.exports = {
+    GLS_CONNECTOR_HOST: env.GLS_CONNECTOR_HOST || '127.0.0.0',
+    GLS_CONNECTOR_PORT: env.GLS_CONNECTOR_PORT || 3000,
+    GLS_METRICS_HOST: env.GLS_METRICS_HOST || '127.0.0.0',
+    GLS_METRICS_PORT: env.GLS_METRICS_PORT || 8125,
+    GLS_WIF: env.GLS_WIF,
+    GLS_LOGIN: env.GLS_LOGIN,
+};
