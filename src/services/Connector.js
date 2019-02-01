@@ -19,8 +19,8 @@ class Connector extends BasicConnector {
 
         await super.start({
             serverRoutes: {
-                'bandwidth.Provide': provider.provideBandwidth.bind(provider),
-                'bandwidth.BanUser': whitelist.banUser.bind(provider),
+                'bandwidth.provide': provider.provideBandwidth.bind(provider),
+                'bandwidth.banUser': whitelist.banUser.bind(provider),
             },
         });
     }

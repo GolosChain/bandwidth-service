@@ -1,16 +1,13 @@
 const core = require('gls-core-service');
 const Basic = core.controllers.Basic;
 const env = require('../data/env');
-const { GLS_WIF, GLS_LOGIN } = env;
+const { GLS_PROVIDER_WIF, GLS_PROVIDER_USERNAME } = env;
 
 class BandwidthProvider extends Basic {
     constructor({ connector, whitelist }) {
         super({ connector });
 
         this.whitelist = whitelist;
-
-        this._WIF = GLS_WIF;
-        this._login = GLS_LOGIN;
 
         // we cannot use the service until it's authorized in blockchain
         this._authorized = false;
@@ -31,7 +28,7 @@ class BandwidthProvider extends Basic {
             const secret = '';
             // store the given secret
             this._secret = secret;
-            // secondly, sign the test vote transaction with the secret as a permlink and a username as a voter and the active key
+            // secondly, sign the test vote transaction with the secret as a permlink and a user as a voter and the active key
             // store the xsign
             const xsign = '';
             this._sign = xsign;
@@ -44,12 +41,12 @@ class BandwidthProvider extends Basic {
         }
     }
 
-    async provideBandwidth({ username, channelId, transaction }) {
+    async provideBandwidth({ user, channelId, transaction }) {
         if (!this.serviceReady) {
             await this.authorize();
         }
 
-        const isAllowed = await this.whitelist.isAllowed({ channelId, username });
+        const isAllowed = await this.whitelist.isAllowed({ channelId, user });
 
         if (!isAllowed) {
             throw {
