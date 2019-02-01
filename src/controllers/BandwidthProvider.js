@@ -2,9 +2,12 @@ const core = require('gls-core-service');
 const Basic = core.controllers.Basic;
 const env = require('../data/env');
 const { GLS_WIF, GLS_LOGIN } = env;
+
 class BandwidthProvider extends Basic {
-    constructor({ connector }) {
+    constructor({ connector, whitelist }) {
         super({ connector });
+
+        this.whitelist = whitelist;
 
         this._WIF = GLS_WIF;
         this._login = GLS_LOGIN;
@@ -41,9 +44,18 @@ class BandwidthProvider extends Basic {
         }
     }
 
-    async provideBandwidth() {
+    async provideBandwidth({ username, channelId, transaction }) {
         if (!this.serviceReady) {
             await this.authorize();
+        }
+
+        const isAllowed = await this.whitelist.isAllowed({ channelId, username });
+
+        if (!isAllowed) {
+            throw {
+                code: 1103,
+                message: 'This user is not allowed to require bandwidth',
+            };
         }
 
         /*

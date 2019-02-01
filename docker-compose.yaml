@@ -13,5 +13,19 @@ services:
         env_file:
             - .env
 
+    mongo:
+        container_name: bandwidth_mongo
+        image: mongo
+        restart: always
+        volumes:
+            - badwidth_mongodb_vol:/data/db
+        ports:
+            - 127.0.0.1:27017:27017
+        networks:
+            - services-tier
+
 networks:
     services-tier:
+
+volumes:
+    badwidth_mongodb_vol:
