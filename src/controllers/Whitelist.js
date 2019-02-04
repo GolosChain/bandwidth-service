@@ -15,6 +15,18 @@ class WhitelistController extends BasicController {
         return true;
     }
 
+    async handleOffline({ user, channelId }) {
+        this._cidSet.delete(channelId);
+
+        if (this._whitelistMap.has(user)) {
+            const mappedSet = this._whitelistMap.get(user);
+
+            mappedSet.delete(channelId);
+
+            if (mappedSet.size === 0) this._whitelistMap.delete(user);
+        }
+    }
+
     _addInMemoryDb({ user, channelId }) {
         this._cidSet.add(channelId);
 
@@ -45,16 +57,16 @@ class WhitelistController extends BasicController {
         // in memory -> allowed
         if (this._cidSet.has(channelId)) return true;
 
-        user = await Whitelist.findOne({ user });
+        const dbUser = await Whitelist.findOne({ user });
 
         // explicitly banned -> not allowed
-        if (user && user.banned) {
+        if (dbUser && dbUser.banned) {
             return false;
         }
 
         // in db -> allowed and should be stored in memory
-        if (user && !user.banned) {
-            this._addInMemoryDb({ user, channelId });
+        if (dbUser && !dbUser.banned) {
+            this._addInMemoryDb({ user: dbUser.user, channelId });
 
             return true;
         }
@@ -66,14 +78,14 @@ class WhitelistController extends BasicController {
         }
 
         // in reg service -> add to mongo and to in-mem
-        await Whitelist.create({ user });
+        await Whitelist.create({ user, banned: false });
         this._addInMemoryDb({ user, channelId });
 
         return true;
     }
 
     async banUser(user) {
-        await Whitelist.findOneAndRemove({ user });
+        await Whitelist.findOneAndUpdate({ user }, { banned: true });
 
         this._removeFromMemoryDb(user);
     }

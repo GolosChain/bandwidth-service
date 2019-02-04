@@ -1,11 +1,11 @@
 const core = require('gls-core-service');
-const Basic = core.controllers.Basic;
+const BasicService = core.services.Basic;
 const env = require('../data/env');
 const { GLS_PROVIDER_WIF, GLS_PROVIDER_USERNAME } = env;
 
-class BandwidthProvider extends Basic {
-    constructor({ connector, whitelist }) {
-        super({ connector });
+class BandwidthProvider extends BasicService {
+    constructor({ whitelist }) {
+        super();
 
         this.whitelist = whitelist;
 
@@ -17,7 +17,11 @@ class BandwidthProvider extends Basic {
         this._secret = null;
     }
 
-    get serviceReady() {
+    async start() {
+        await this.authorize();
+    }
+
+    serviceReady() {
         // service is ready when and only then there it is authorized and has not-null secret and sign
         return this._authorized && this._secret && this._sign;
     }
@@ -25,12 +29,12 @@ class BandwidthProvider extends Basic {
     async authorize() {
         try {
             // first call `auth.generateSecret`
-            const secret = '';
+            const secret = 'secret';
             // store the given secret
             this._secret = secret;
             // secondly, sign the test vote transaction with the secret as a permlink and a user as a voter and the active key
             // store the xsign
-            const xsign = '';
+            const xsign = 'sign';
             this._sign = xsign;
             // send `auth.authorize` request with a secret as a secret, xsign as a sign and user from env as a user
 
@@ -41,8 +45,8 @@ class BandwidthProvider extends Basic {
         }
     }
 
-    async provideBandwidth({ user, channelId, transaction }) {
-        if (!this.serviceReady) {
+    async provideBandwidth({ routing: { channelId }, auth: { user }, params: { transaction } }) {
+        if (!this.serviceReady()) {
             await this.authorize();
         }
 

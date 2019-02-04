@@ -1,6 +1,6 @@
 const core = require('gls-core-service');
 const BasicConnector = core.services.Connector;
-const BandwidthProvider = require('../controllers/BandwidthProvider');
+const BandwidthProvider = require('./BandwidthProvider');
 const Whitelist = require('../controllers/Whitelist');
 
 class Connector extends BasicConnector {
@@ -8,7 +8,6 @@ class Connector extends BasicConnector {
         super();
         this._whitelistController = new Whitelist({ connector: this });
         this._bandwidthProvider = new BandwidthProvider({
-            connector: this,
             whitelist: this._whitelistController,
         });
     }
@@ -17,10 +16,17 @@ class Connector extends BasicConnector {
         const provider = this._bandwidthProvider;
         const whitelist = this._whitelistController;
 
+        await provider.start();
+
+        this.on('open', data => {
+            console.log(data);
+        });
+
         await super.start({
             serverRoutes: {
                 'bandwidth.provide': provider.provideBandwidth.bind(provider),
-                'bandwidth.banUser': whitelist.banUser.bind(provider),
+                'bandwidth.banUser': whitelist.banUser.bind(whitelist),
+                'bandwidth.notifyOffline': whitelist.handleOffline.bind(whitelist),
             },
         });
     }
