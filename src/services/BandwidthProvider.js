@@ -1,55 +1,70 @@
+const { TextEncoder, TextDecoder } = require('text-encoding'); // node only; native TextEncoder/Decoder
 const core = require('gls-core-service');
+const fetch = require('node-fetch'); // node only; not needed in browsers
+const { JsonRpc, Api } = require('cyberwayjs');
+const JsSignatureProvider = require('cyberwayjs/dist/eosjs-jssig').default;
 const BasicService = core.services.Basic;
 const env = require('../data/env');
-const { GLS_PROVIDER_WIF, GLS_PROVIDER_USERNAME } = env;
+const {
+    CMN_PROVIDER_WIF,
+    CMN_PROVIDER_PUBLIC_KEY,
+    CMN_PROVIDER_USERNAME,
+    CMN_CYBERWAY_HTTP_URL,
+} = env;
+
+const rpc = new JsonRpc(CMN_CYBERWAY_HTTP_URL, { fetch });
+
+const requiredKeys = [CMN_PROVIDER_PUBLIC_KEY];
+const signatureProviderBP = new JsSignatureProvider([CMN_PROVIDER_WIF]);
+
+const api = new Api({
+    rpc,
+    signatureProviderBP,
+    textDecoder: new TextDecoder(),
+    textEncoder: new TextEncoder(),
+});
 
 class BandwidthProvider extends BasicService {
     constructor({ whitelist }) {
         super();
 
         this.whitelist = whitelist;
-
-        // we cannot use the service until it's authorized in blockchain
-        this._authorized = false;
-
-        // these are null by default
-        this._sign = null;
-        this._secret = null;
     }
 
-    async start() {
-        await this.authorize();
+    start() {
+        // do nothing, just override default
     }
 
-    serviceReady() {
-        // service is ready when and only then there it is authorized and has not-null secret and sign
-        return this._authorized && this._secret && this._sign;
+    async _signTransaction({ transaction, chainId }) {
+        const transactionBW = await signatureProviderBP.sign({
+            chainId,
+            requiredKeys,
+            serializedTransaction: transaction.serializedTransaction,
+        });
+
+        const transactionBoth = {
+            ...transaction,
+            signatures: [...transaction.signatures, ...transactionBW.signatures],
+            serializedTransaction: transaction.serializedTransaction,
+        };
+
+        const { signatures, serializedTransaction } = transactionBoth;
+
+        return { signatures, serializedTransaction };
     }
 
-    async authorize() {
-        try {
-            // first call `auth.generateSecret`
-            const secret = 'secret';
-            // store the given secret
-            this._secret = secret;
-            // secondly, sign the test vote transaction with the secret as a permlink and a user as a voter and the active key
-            // store the xsign
-            const xsign = 'sign';
-            this._sign = xsign;
-            // send `auth.authorize` request with a secret as a secret, xsign as a sign and user from env as a user
-
-            this._authorized = true;
-        } catch (error) {
-            console.error(error);
-            process.exit(1);
-        }
+    async _sendTransaction({ signatures, serializedTransaction }) {
+        return await api.pushSignedTransaction({
+            signatures,
+            serializedTransaction,
+        });
     }
 
-    async provideBandwidth({ routing: { channelId }, auth: { user }, params: { transaction } }) {
-        if (!this.serviceReady()) {
-            await this.authorize();
-        }
-
+    async provideBandwidth({
+        routing: { channelId },
+        auth: { user },
+        params: { transaction, chainId },
+    }) {
         const isAllowed = await this.whitelist.isAllowed({ channelId, user });
 
         if (!isAllowed) {
@@ -59,20 +74,24 @@ class BandwidthProvider extends BasicService {
             };
         }
 
-        /*
-        Контракт: eosio
-Действие: providebw
-Аргументы: (name provider, name account):
-* provider - аккаунт, который предоставляет свой бендвич для выполнения транзакции
-* account - аккаунт пользователя, которому предоставляется бендвич
+        const serializedTransactionBuffer = Uint8Array.from(transaction.serializedTransaction);
+        transaction.serializedTransaction = serializedTransactionBuffer;
 
-Выполняемое действие:
-Предоставить бендвич для выполнения действий другому пользователю. При включении данного действия в транзакцию, CPU/NET бендвич за действия в данной транзакции будут списаны с аккаунты provider вместо их списания с аккаунта account.
+        const deserializedTransaction = await api.deserializeTransactionWithActions(
+            transaction.serializedTransaction
+        );
 
-Данная операция требует разрешения от пользователя provider.
+        const shouldProvideBandwidth = deserializedTransaction.actions.find(action => {
+            return action.name === 'providebw' && action.data.provider === CMN_PROVIDER_USERNAME;
+        });
 
-Данная операция сейчас доступна на тестнете cyberway, но пока не запущен системный смарт-контракт ее действие невозможно увидеть, так как выключен подсчет бендвича.
-        */
+        let transactionToSend = transaction;
+
+        if (shouldProvideBandwidth) {
+            transactionToSend = await this._signTransaction({ transaction, chainId });
+        }
+
+        return await this._sendTransaction(transactionToSend);
     }
 }
 

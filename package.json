@@ -9,7 +9,12 @@
   "author": "golos.io",
   "license": "GPL-3.0",
   "dependencies": {
-    "gls-core-service": "^2.16.1"
+    "@types/node-fetch": "^2.1.4",
+    "@types/text-encoding": "0.0.35",
+    "cyberwayjs": "^20.0.0-beta3.4",
+    "gls-core-service": "^2.16.1",
+    "node-fetch": "^2.3.0",
+    "text-encoding": "^0.7.0"
   },
   "prettier": {
     "singleQuote": true,
