@@ -19,7 +19,9 @@ class WhitelistController extends BasicController {
 
     async isAllowed({ channelId, user }) {
         // in memory -> allowed
-        if (this._storage.isStored({ channelId, user })) return true;
+        if (this._storage.isStored({ channelId, user })) {
+            return true;
+        }
 
         const dbUser = await Whitelist.findOne({ user });
 

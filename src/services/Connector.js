@@ -25,10 +25,6 @@ class Connector extends BasicConnector {
         await provider.start();
         await storage.start();
 
-        this.on('open', data => {
-            console.log(data);
-        });
-
         await super.start({
             serverRoutes: {
                 'bandwidth.provide': provider.provideBandwidth.bind(provider),
