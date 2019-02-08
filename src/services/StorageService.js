@@ -18,25 +18,29 @@ class Storage extends BasicService {
         setInterval(this._cleanup.bind(this), interval);
     }
 
+    _removeByChannelId({ channelId }) {
+        this._timeoutMap.delete(channelId);
+        this._cidSet.delete(channelId);
+
+        const username = this._cidToUserMap.get(channelId);
+
+        if (username) {
+            const cidSet = this._whitelistMap.get(username);
+
+            cidSet.delete(channelId);
+            if (cidSet.size === 0) {
+                this._whitelistMap.delete(username);
+            }
+        }
+    }
+
     _cleanup() {
         const now = Date.now();
         for ([channelId, lastRequestDate] of this._timeoutMap) {
             const shouldBeDeleted = now - lastRequestDate >= CMN_CHANNEL_TTL;
 
             if (shouldBeDeleted) {
-                this._timeoutMap.delete(channelId);
-                this._cidSet.delete(channelId);
-
-                const username = this._cidToUserMap.get(channelId);
-
-                if (username) {
-                    const cidSet = this._whitelistMap.get(username);
-
-                    cidSet.delete(channelId);
-                    if (cidSet.size === 0) {
-                        this._whitelistMap.delete(username);
-                    }
-                }
+                this._removeByChannelId({ channelId });
             }
         }
     }

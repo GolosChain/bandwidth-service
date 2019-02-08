@@ -17,7 +17,7 @@ module.exports = MongoDB.makeModel(
         index: [
             {
                 fields: {
-                    user: true,
+                    user: 1,
                 },
             },
         ],

@@ -31,10 +31,6 @@ class BandwidthProvider extends BasicController {
         this._whitelist = whitelist;
     }
 
-    start() {
-        // do nothing, just override default
-    }
-
     async _signTransaction({ transaction, chainId }) {
         const transactionBW = await signatureProviderBP.sign({
             chainId,
