@@ -1,13 +1,15 @@
 const core = require('gls-core-service');
 const BasicConnector = core.services.Connector;
-const BandwidthProvider = require('./BandwidthProvider');
+const BandwidthProvider = require('../controllers/BandwidthProvider');
 const StorageService = require('./StorageService');
 const Whitelist = require('../controllers/Whitelist');
+const env = require('../data/env');
 
 class Connector extends BasicConnector {
     constructor() {
         super();
         this._storageService = new StorageService();
+        this.addNested(this._storageService);
         this._whitelistController = new Whitelist({
             connector: this,
             storage: this._storageService,
@@ -18,12 +20,8 @@ class Connector extends BasicConnector {
     }
 
     async start() {
-        const storage = this._storageService;
         const provider = this._bandwidthProvider;
         const whitelist = this._whitelistController;
-
-        await provider.start();
-        await storage.start();
 
         await super.start({
             serverRoutes: {
@@ -31,7 +29,12 @@ class Connector extends BasicConnector {
                 'bandwidth.banUser': whitelist.banUser.bind(whitelist),
                 'bandwidth.notifyOffline': whitelist.handleOffline.bind(whitelist),
             },
+            requiredClients: {
+                registration: env.CMN_REGISTRATION_CONNECT,
+            },
         });
+
+        await this.startNested();
     }
 }
 

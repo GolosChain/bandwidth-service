@@ -1,7 +1,7 @@
 const core = require('gls-core-service');
 const BasicService = core.services.Basic;
 const env = require('../data/env');
-const { GLS_CHANNEL_TTL } = env;
+const { CMN_CHANNEL_TTL } = env;
 
 class Storage extends BasicService {
     constructor() {
@@ -21,7 +21,7 @@ class Storage extends BasicService {
     _cleanup() {
         const now = Date.now();
         for ([channelId, lastRequestDate] of this._timeoutMap) {
-            const shouldBeDeleted = now - lastRequestDate >= GLS_CHANNEL_TTL;
+            const shouldBeDeleted = now - lastRequestDate >= CMN_CHANNEL_TTL;
 
             if (shouldBeDeleted) {
                 this._timeoutMap.delete(channelId);

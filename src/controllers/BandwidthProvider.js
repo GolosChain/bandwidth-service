@@ -1,9 +1,9 @@
-const { TextEncoder, TextDecoder } = require('text-encoding'); // node only; native TextEncoder/Decoder
+const { TextEncoder, TextDecoder } = require('text-encoding');
 const core = require('gls-core-service');
-const fetch = require('node-fetch'); // node only; not needed in browsers
+const fetch = require('node-fetch');
 const { JsonRpc, Api } = require('cyberwayjs');
 const JsSignatureProvider = require('cyberwayjs/dist/eosjs-jssig').default;
-const BasicService = core.services.Basic;
+const BasicController = core.controllers.Basic;
 const env = require('../data/env');
 const {
     CMN_PROVIDER_WIF,
@@ -24,11 +24,11 @@ const api = new Api({
     textEncoder: new TextEncoder(),
 });
 
-class BandwidthProvider extends BasicService {
+class BandwidthProvider extends BasicController {
     constructor({ whitelist }) {
         super();
 
-        this.whitelist = whitelist;
+        this._whitelist = whitelist;
     }
 
     start() {
@@ -65,22 +65,11 @@ class BandwidthProvider extends BasicService {
         auth: { user },
         params: { transaction, chainId },
     }) {
-        const isAllowed = await this.whitelist.isAllowed({ channelId, user });
-
-        if (!isAllowed) {
-            throw {
-                code: 1103,
-                message: 'This user is not allowed to require bandwidth',
-            };
-        }
-
-        const serializedTransactionBuffer = Uint8Array.from(transaction.serializedTransaction);
-        transaction.serializedTransaction = serializedTransactionBuffer;
+        transaction.serializedTransaction = Uint8Array.from(transaction.serializedTransaction);
 
         const deserializedTransaction = await api.deserializeTransactionWithActions(
             transaction.serializedTransaction
         );
-
         const shouldProvideBandwidth = deserializedTransaction.actions.find(action => {
             return action.name === 'providebw' && action.data.provider === CMN_PROVIDER_USERNAME;
         });
@@ -88,6 +77,15 @@ class BandwidthProvider extends BasicService {
         let transactionToSend = transaction;
 
         if (shouldProvideBandwidth) {
+            const isAllowed = await this._whitelist.isAllowed({ channelId, user });
+
+            if (!isAllowed) {
+                throw {
+                    code: 1103,
+                    message: 'This user is not allowed to require bandwidth',
+                };
+            }
+
             transactionToSend = await this._signTransaction({ transaction, chainId });
         }
 
