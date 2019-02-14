@@ -10,7 +10,7 @@ class WhitelistController extends BasicController {
     }
 
     async _askRegService({ user }) {
-        return this.callService('registration', 'registration.isRegistered', { user });
+        return this.callService('registration', 'isRegistered', { user });
     }
 
     async handleOffline({ user, channelId }) {
