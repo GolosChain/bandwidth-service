@@ -5,6 +5,7 @@ const { JsonRpc, Api } = require('cyberwayjs');
 const JsSignatureProvider = require('cyberwayjs/dist/eosjs-jssig').default;
 const BasicController = core.controllers.Basic;
 const env = require('../data/env');
+const Log = require('../utils/Log');
 const {
     CMN_PROVIDER_WIF,
     CMN_PROVIDER_PUBLIC_KEY,
@@ -29,6 +30,7 @@ class BandwidthProvider extends BasicController {
         super();
 
         this._whitelist = whitelist;
+        this._logger = new Log();
     }
 
     async _signTransaction({ transaction, chainId }) {
@@ -50,10 +52,15 @@ class BandwidthProvider extends BasicController {
     }
 
     async _sendTransaction({ signatures, serializedTransaction }) {
-        return await api.pushSignedTransaction({
-            signatures,
-            serializedTransaction,
-        });
+        try {
+            return await api.pushSignedTransaction({
+                signatures,
+                serializedTransaction,
+            });
+        } catch (error) {
+            console.error(error.json);
+            throw error.json;
+        }
     }
 
     async provideBandwidth({
@@ -84,6 +91,12 @@ class BandwidthProvider extends BasicController {
 
             transactionToSend = await this._signTransaction({ transaction, chainId });
         }
+
+        this._logger.createEntry({
+            transaction: deserializedTransaction,
+            user,
+            providedBandwidth: shouldProvideBandwidth,
+        });
 
         return await this._sendTransaction(transactionToSend);
     }
