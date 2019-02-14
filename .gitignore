@@ -3,5 +3,4 @@ node_modules
 db
 .env
 .vscode
-test.js
 .npmrc
