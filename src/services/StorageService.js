@@ -1,5 +1,6 @@
 const core = require('gls-core-service');
 const BasicService = core.services.Basic;
+const Logger = core.utils.Logger;
 const env = require('../data/env');
 const { CMN_CHANNEL_TTL, CMN_STORAGE_CLEANUP_TIMEOUT } = env;
 
@@ -14,11 +15,15 @@ class Storage extends BasicService {
     }
 
     async start() {
-        this.startLoop(0, CMN_STORAGE_CLEANUP_TIMEOUT);
+        this.startLoop(CMN_STORAGE_CLEANUP_TIMEOUT, CMN_STORAGE_CLEANUP_TIMEOUT);
     }
 
     async iteration() {
-        this._cleanup();
+        try {
+            this._cleanup();
+        } catch (error) {
+            Logger.error(`Cleanup error - ${error.stack}`);
+        }
     }
 
     _removeByChannelId({ channelId }) {
