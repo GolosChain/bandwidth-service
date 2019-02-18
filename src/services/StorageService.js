@@ -1,7 +1,7 @@
 const core = require('gls-core-service');
 const BasicService = core.services.Basic;
 const env = require('../data/env');
-const { CMN_CHANNEL_TTL } = env;
+const { CMN_CHANNEL_TTL, CMN_STORAGE_CLEANUP_TIMEOUT } = env;
 
 class Storage extends BasicService {
     constructor() {
@@ -14,8 +14,11 @@ class Storage extends BasicService {
     }
 
     async start() {
-        const interval = 1000 * 60 * 60; // one hour
-        setInterval(this._cleanup.bind(this), interval);
+        this.startLoop(0, CMN_STORAGE_CLEANUP_TIMEOUT);
+    }
+
+    async iteration() {
+        this._cleanup();
     }
 
     _removeByChannelId({ channelId }) {
@@ -28,6 +31,7 @@ class Storage extends BasicService {
             const cidSet = this._whitelistMap.get(username);
 
             cidSet.delete(channelId);
+
             if (cidSet.size === 0) {
                 this._whitelistMap.delete(username);
             }
@@ -36,6 +40,7 @@ class Storage extends BasicService {
 
     _cleanup() {
         const now = Date.now();
+
         for ([channelId, lastRequestDate] of this._timeoutMap) {
             const shouldBeDeleted = now - lastRequestDate >= CMN_CHANNEL_TTL;
 

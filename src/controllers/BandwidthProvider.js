@@ -4,6 +4,7 @@ const fetch = require('node-fetch');
 const { JsonRpc, Api } = require('cyberwayjs');
 const JsSignatureProvider = require('cyberwayjs/dist/eosjs-jssig').default;
 const BasicController = core.controllers.Basic;
+const Logger = core.utils.Logger;
 const env = require('../data/env');
 const Log = require('../utils/Log');
 const {
@@ -31,36 +32,6 @@ class BandwidthProvider extends BasicController {
 
         this._whitelist = whitelist;
         this._logger = new Log();
-    }
-
-    async _signTransaction({ transaction, chainId }) {
-        const transactionBW = await signatureProviderBP.sign({
-            chainId,
-            requiredKeys,
-            serializedTransaction: transaction.serializedTransaction,
-        });
-
-        const transactionBoth = {
-            ...transaction,
-            signatures: [...transaction.signatures, ...transactionBW.signatures],
-            serializedTransaction: transaction.serializedTransaction,
-        };
-
-        const { signatures, serializedTransaction } = transactionBoth;
-
-        return { signatures, serializedTransaction };
-    }
-
-    async _sendTransaction({ signatures, serializedTransaction }) {
-        try {
-            return await api.pushSignedTransaction({
-                signatures,
-                serializedTransaction,
-            });
-        } catch (error) {
-            console.error(error.json);
-            throw error.json;
-        }
     }
 
     async provideBandwidth({
@@ -99,6 +70,36 @@ class BandwidthProvider extends BasicController {
         });
 
         return await this._sendTransaction(transactionToSend);
+    }
+
+    async _signTransaction({ transaction, chainId }) {
+        const transactionBW = await signatureProviderBP.sign({
+            chainId,
+            requiredKeys,
+            serializedTransaction: transaction.serializedTransaction,
+        });
+
+        const transactionBoth = {
+            ...transaction,
+            signatures: [...transaction.signatures, ...transactionBW.signatures],
+            serializedTransaction: transaction.serializedTransaction,
+        };
+
+        const { signatures, serializedTransaction } = transactionBoth;
+
+        return { signatures, serializedTransaction };
+    }
+
+    async _sendTransaction({ signatures, serializedTransaction }) {
+        try {
+            return await api.pushSignedTransaction({
+                signatures,
+                serializedTransaction,
+            });
+        } catch (error) {
+            Logger.error(error.json);
+            throw error.json;
+        }
     }
 }
 

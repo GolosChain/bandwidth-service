@@ -3,12 +3,9 @@ const Logger = core.utils.Logger;
 const LogModel = require('../model/Log');
 
 class Log {
-    constructor() {
-        this._log = LogModel;
-    }
-
     createEntry({ user, transaction, providedBandwidth }) {
-        const entry = new this._log();
+        const entry = new LogModel();
+
         entry.user = user;
         entry.transaction = transaction;
         entry.actions = transaction.actions;
