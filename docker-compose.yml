@@ -1,4 +1,4 @@
-version: '3.6'
+version: '2.1'
 services:
   node:
     container_name: bandwidth-provider-node
@@ -14,10 +14,8 @@ services:
       - $GLS_CONNECTOR_HOST:$GLS_CONNECTOR_PORT:$GLS_CONNECTOR_PORT
     env_file:
       - .env
-    depends_on:
-      - mongo
 
-  mongo:
+  bandwidth_mongo:
     container_name: bandwidth_mongo
     image: mongo
     restart: always
@@ -45,7 +43,7 @@ services:
     environment:
       - MONGODB_URI=mongodb://bandwidth_mongo:27017
     networks:
-      - services-tier     
+      - services-tier
 
 networks:
   services-tier:
