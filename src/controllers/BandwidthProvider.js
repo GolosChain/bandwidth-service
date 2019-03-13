@@ -44,9 +44,13 @@ class BandwidthProvider extends BasicController {
         const deserializedTransaction = await api.deserializeTransactionWithActions(
             transaction.serializedTransaction
         );
-        const shouldProvideBandwidth = deserializedTransaction.actions.find(action => {
-            return action.name === 'providebw' && action.data.provider === CMN_PROVIDER_USERNAME;
-        });
+        const shouldProvideBandwidth = Boolean(
+            deserializedTransaction.actions.find(action => {
+                return (
+                    action.name === 'providebw' && action.data.provider === CMN_PROVIDER_USERNAME
+                );
+            })
+        );
 
         let transactionToSend = transaction;
 
