@@ -30,7 +30,7 @@ class Connector extends BasicConnector {
                 'bandwidth.notifyOffline': whitelist.handleOffline.bind(whitelist),
             },
             requiredClients: {
-                registration: env.CMN_REGISTRATION_CONNECT,
+                registration: env.GLS_REGISTRATION_CONNECT,
             },
         });
 

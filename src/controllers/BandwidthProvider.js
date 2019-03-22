@@ -8,16 +8,16 @@ const Logger = core.utils.Logger;
 const env = require('../data/env');
 const Log = require('../utils/Log');
 const {
-    CMN_PROVIDER_WIF,
-    CMN_PROVIDER_PUBLIC_KEY,
-    CMN_PROVIDER_USERNAME,
-    CMN_CYBERWAY_HTTP_URL,
+    GLS_PROVIDER_WIF,
+    GLS_PROVIDER_PUBLIC_KEY,
+    GLS_PROVIDER_USERNAME,
+    GLS_CYBERWAY_HTTP_URL,
 } = env;
 
-const rpc = new JsonRpc(CMN_CYBERWAY_HTTP_URL, { fetch });
+const rpc = new JsonRpc(GLS_CYBERWAY_HTTP_URL, {fetch});
 
-const requiredKeys = [CMN_PROVIDER_PUBLIC_KEY];
-const signatureProviderBP = new JsSignatureProvider([CMN_PROVIDER_WIF]);
+const requiredKeys = [GLS_PROVIDER_PUBLIC_KEY];
+const signatureProviderBP = new JsSignatureProvider([GLS_PROVIDER_WIF]);
 
 const api = new Api({
     rpc,
@@ -47,7 +47,7 @@ class BandwidthProvider extends BasicController {
         const shouldProvideBandwidth = Boolean(
             deserializedTransaction.actions.find(action => {
                 return (
-                    action.name === 'providebw' && action.data.provider === CMN_PROVIDER_USERNAME
+                    action.name === 'providebw' && action.data.provider === GLS_PROVIDER_USERNAME
                 );
             })
         );
