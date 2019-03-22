@@ -11,7 +11,7 @@ class Storage extends BasicService {
         this._whitelistMap = new Map(); // user -> set of cids
         this._cidSet = new Set(); // set of cids
         this._timeoutMap = new Map(); // channelId -> last request
-        this._cidToUserMap = new Map(); // cannelId -> user name
+        this._cidToUserMap = new Map(); // channelId -> user name
     }
 
     async start() {
