@@ -35,7 +35,13 @@ class Storage extends BasicService {
         if (username) {
             const cidSet = this._whitelistMap.get(username);
 
-            cidSet.delete(channelId);
+            try {
+                cidSet.delete(channelId);
+
+            } catch (error) {
+                // do nothing
+                // just already deleted
+            }
 
             if (cidSet.size === 0) {
                 this._whitelistMap.delete(username);
