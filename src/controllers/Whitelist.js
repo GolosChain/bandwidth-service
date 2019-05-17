@@ -19,35 +19,38 @@ class WhitelistController extends BasicController {
 
     async isAllowed({ channelId, user }) {
         // in memory -> allowed
-        if (this._storage.isStored({ channelId, user })) {
-            return true;
-        }
-
-        const dbUser = await Whitelist.findOne({ user });
-
-        // explicitly banned -> not allowed
-        if (dbUser && dbUser.banned) {
-            return false;
-        }
-
-        // in db -> allowed and should be stored in memory
-        if (dbUser && !dbUser.banned) {
-            this._storage.addInMemoryDb({ user: dbUser.user, channelId });
-
-            return true;
-        }
-
-        const inRegService = await this._askRegService({ user });
-
-        if (!inRegService) {
-            return false;
-        }
-
-        // in reg service -> add to mongo and to in-mem
-        await Whitelist.create({ user, banned: false });
-        this._storage.addInMemoryDb({ user, channelId });
-
+        // TODO: remove this after MVP
         return true;
+        //
+        // if (this._storage.isStored({ channelId, user })) {
+        //     return true;
+        // }
+        //
+        // const dbUser = await Whitelist.findOne({ user });
+        //
+        // // explicitly banned -> not allowed
+        // if (dbUser && dbUser.banned) {
+        //     return false;
+        // }
+        //
+        // // in db -> allowed and should be stored in memory
+        // if (dbUser && !dbUser.banned) {
+        //     this._storage.addInMemoryDb({ user: dbUser.user, channelId });
+        //
+        //     return true;
+        // }
+        //
+        // const inRegService = await this._askRegService({ user });
+        //
+        // if (!inRegService) {
+        //     return false;
+        // }
+        //
+        // // in reg service -> add to mongo and to in-mem
+        // await Whitelist.create({ user, banned: false });
+        // this._storage.addInMemoryDb({ user, channelId });
+        //
+        // return true;
     }
 
     async banUser(user) {
