@@ -14,7 +14,7 @@ const {
     GLS_CYBERWAY_HTTP_URL,
 } = env;
 
-const rpc = new JsonRpc(GLS_CYBERWAY_HTTP_URL, {fetch});
+const rpc = new JsonRpc(GLS_CYBERWAY_HTTP_URL, { fetch });
 
 const requiredKeys = [GLS_PROVIDER_PUBLIC_KEY];
 const signatureProviderBP = new JsSignatureProvider([GLS_PROVIDER_WIF]);
@@ -39,11 +39,21 @@ class BandwidthProvider extends BasicController {
         auth: { user },
         params: { transaction, chainId },
     }) {
-        transaction.serializedTransaction = Uint8Array.from(transaction.serializedTransaction);
-
-        const deserializedTransaction = await api.deserializeTransactionWithActions(
-            transaction.serializedTransaction
-        );
+        try {
+            transaction.serializedTransaction = Uint8Array.from(transaction.serializedTransaction);
+        } catch (error) {
+            Logger.error('Uind8Array error --', JSON.stringify(error, null, 4));
+            throw error;
+        }
+        let deserializedTransaction;
+        try {
+            deserializedTransaction = await api.deserializeTransactionWithActions(
+                transaction.serializedTransaction
+            );
+        } catch (error) {
+            Logger.error('Transaction deserialization error --', JSON.stringify(error, null, 4));
+            throw error;
+        }
         const shouldProvideBandwidth = Boolean(
             deserializedTransaction.actions.find(action => {
                 return (
@@ -55,7 +65,13 @@ class BandwidthProvider extends BasicController {
         let transactionToSend = transaction;
 
         if (shouldProvideBandwidth) {
-            const isAllowed = await this._whitelist.isAllowed({ channelId, user });
+            let isAllowed = false;
+            try {
+                isAllowed = await this._whitelist.isAllowed({ channelId, user });
+            } catch (error) {
+                Logger.error('Whitelist check error --', JSON.stringify(error, null, 4));
+                throw error;
+            }
 
             if (!isAllowed) {
                 throw {
@@ -64,16 +80,30 @@ class BandwidthProvider extends BasicController {
                 };
             }
 
-            transactionToSend = await this._signTransaction({ transaction, chainId });
+            try {
+                transactionToSend = await this._signTransaction({ transaction, chainId });
+            } catch (error) {
+                Logger.error('Transaction sign error --', JSON.stringify(error, null, 4));
+                throw error;
+            }
         }
 
-        this._logger.createEntry({
-            transaction: deserializedTransaction,
-            user,
-            providedBandwidth: shouldProvideBandwidth,
-        });
+        try {
+            this._logger.createEntry({
+                transaction: deserializedTransaction,
+                user,
+                providedBandwidth: shouldProvideBandwidth,
+            });
+        } catch (error) {
+            Logger.error('Logger entry creation error --', JSON.stringify(error, null, 4));
+        }
 
-        return await this._sendTransaction(transactionToSend);
+        try {
+            return await this._sendTransaction(transactionToSend);
+        } catch (error) {
+            Logger.error('Transaction send error --', JSON.stringify(error, null, 4));
+            throw error;
+        }
     }
 
     async _signTransaction({ transaction, chainId }) {
