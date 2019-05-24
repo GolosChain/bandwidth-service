@@ -51,7 +51,7 @@ class Storage extends BasicService {
     _cleanup() {
         const now = Date.now();
 
-        for ([channelId, lastRequestDate] of this._timeoutMap) {
+        for (const [channelId, lastRequestDate] of this._timeoutMap) {
             if (!channelId || !lastRequestDate) {
                 Logger.warn(
                     `Timeout map is broken: channelId: ${channelId}, lastRequestDate: ${lastRequestDate}`
