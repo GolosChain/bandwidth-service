@@ -2,7 +2,7 @@ const core = require('gls-core-service');
 const BasicService = core.services.Basic;
 const Logger = core.utils.Logger;
 const env = require('../data/env');
-const {GLS_CHANNEL_TTL, GLS_STORAGE_CLEANUP_TIMEOUT} = env;
+const { GLS_CHANNEL_TTL, GLS_STORAGE_CLEANUP_TIMEOUT } = env;
 
 class Storage extends BasicService {
     constructor() {
@@ -37,7 +37,6 @@ class Storage extends BasicService {
 
             try {
                 cidSet.delete(channelId);
-
             } catch (error) {
                 // do nothing
                 // just already deleted
@@ -53,6 +52,12 @@ class Storage extends BasicService {
         const now = Date.now();
 
         for ([channelId, lastRequestDate] of this._timeoutMap) {
+            if (!channelId || !lastRequestDate) {
+                Logger.warn(
+                    `Timeout map is broken: channelId: ${channelId}, lastRequestDate: ${lastRequestDate}`
+                );
+            }
+
             const shouldBeDeleted = now - lastRequestDate >= GLS_CHANNEL_TTL;
 
             if (shouldBeDeleted) {
