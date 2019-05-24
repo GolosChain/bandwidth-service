@@ -12,10 +12,10 @@ class WhitelistController extends BasicController {
 
     async _askRegService({ user }) {
         try {
-            const {isAllowed} = await this.callService('registration', 'isRegistered', {
+            const {isRegistered} = await this.callService('registration', 'isRegistered', {
                 userId: user,
             });
-            return isAllowed;
+            return isRegistered;
         } catch (error) {
             Logger.error('Error calling registration service --', error);
 
