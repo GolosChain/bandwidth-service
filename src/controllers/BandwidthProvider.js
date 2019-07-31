@@ -1,7 +1,7 @@
 const { TextEncoder, TextDecoder } = require('text-encoding');
 const core = require('gls-core-service');
 const fetch = require('node-fetch');
-const { JsonRpc, Api } = require('cyberwayjs');
+const { JsonRpc, Api, Serialize } = require('cyberwayjs');
 const JsSignatureProvider = require('cyberwayjs/dist/eosjs-jssig').default;
 const BasicController = core.controllers.Basic;
 const Logger = core.utils.Logger;
@@ -40,7 +40,9 @@ class BandwidthProvider extends BasicController {
         params: { transaction, chainId },
     }) {
         try {
-            transaction.serializedTransaction = Uint8Array.from(transaction.serializedTransaction);
+            transaction.serializedTransaction = Serialize.hexToUint8Array(
+                transaction.serializedTransaction
+            );
         } catch (error) {
             Logger.error('Uind8Array error --', JSON.stringify(error, null, 4));
             throw error;
