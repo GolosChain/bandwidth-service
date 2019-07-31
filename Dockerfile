@@ -3,7 +3,7 @@ FROM node:11-alpine as builder
 ENV IN_DOCKER=1
 WORKDIR /app
 
-COPY .npmrc package.json package-lock.json ./
+COPY package.json package-lock.json ./
 
 RUN npm install --only=production
 
