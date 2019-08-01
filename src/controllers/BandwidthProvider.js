@@ -50,7 +50,7 @@ class BandwidthProvider extends BasicController {
             finalTrx = await this._signTransaction(rawTrx, { chainId });
         }
 
-        this._logEntry({ user, trx, isSigned: isNeedSign });
+        this._logEntry({ user, transaction: trx, isSigned: isNeedSign });
 
         return await this._sendTransaction(finalTrx);
     }
@@ -101,6 +101,8 @@ class BandwidthProvider extends BasicController {
             }
 
             for (const { actor } of action.authorization) {
+                // Проверяем все экшены, чтобы исключить возможность подписи нашим ключом экшенов кроме providebw
+                // Если находим такой экшен, то выдаем ошибку.
                 if (actor === GLS_PROVIDER_USERNAME) {
                     throw {
                         code: 1104,
@@ -149,10 +151,10 @@ class BandwidthProvider extends BasicController {
         }
     }
 
-    _logEntry({ user, trx, isSigned }) {
+    _logEntry({ user, transaction, isSigned }) {
         try {
             this._logger.createEntry({
-                transaction: trx,
+                transaction,
                 user,
                 providedBandwidth: isSigned,
             });
