@@ -39,91 +39,128 @@ class BandwidthProvider extends BasicController {
         auth: { user },
         params: { transaction, chainId },
     }) {
+        const rawTrx = this._parseTransaction(transaction);
+        const trx = await this._deserializeTransaction(rawTrx);
+        const isNeedSign = this._isNeedSigning(trx);
+
+        let finalTrx = rawTrx;
+
+        if (isNeedSign) {
+            await this._checkWhitelist({ user, channelId });
+            finalTrx = await this._signTransaction(rawTrx, { chainId });
+        }
+
+        this._logEntry({ user, transaction: trx, isSigned: isNeedSign });
+
+        return await this._sendTransaction(finalTrx);
+    }
+
+    _parseTransaction(transaction) {
+        let uint8array = null;
+
         try {
-            transaction.serializedTransaction = Serialize.hexToUint8Array(
-                transaction.serializedTransaction
-            );
+            uint8array = Serialize.hexToUint8Array(transaction.serializedTransaction);
         } catch (error) {
-            Logger.error('Uind8Array error --', JSON.stringify(error, null, 4));
+            Logger.error('Conversion hexToUint8Array failed:', error);
             throw error;
         }
-        let deserializedTransaction;
+
+        return {
+            ...transaction,
+            serializedTransaction: uint8array,
+        };
+    }
+
+    async _deserializeTransaction({ serializedTransaction }) {
         try {
-            deserializedTransaction = await api.deserializeTransactionWithActions(
-                transaction.serializedTransaction
-            );
+            return await api.deserializeTransactionWithActions(serializedTransaction);
         } catch (error) {
-            Logger.error('Transaction deserialization error --', JSON.stringify(error, null, 4));
-            throw error;
-        }
-        const shouldProvideBandwidth = Boolean(
-            deserializedTransaction.actions.find(action => {
-                return (
-                    action.name === 'providebw' && action.data.provider === GLS_PROVIDER_USERNAME
-                );
-            })
-        );
-
-        let transactionToSend = transaction;
-
-        if (shouldProvideBandwidth) {
-            let isAllowed = false;
-            try {
-                isAllowed = await this._whitelist.isAllowed({ channelId, user });
-            } catch (error) {
-                Logger.error('Whitelist check error --', JSON.stringify(error, null, 4));
-                throw error;
-            }
-
-            if (!isAllowed) {
-                throw {
-                    code: 1103,
-                    message: 'This user is not allowed to require bandwidth',
-                };
-            }
-
-            try {
-                transactionToSend = await this._signTransaction({ transaction, chainId });
-            } catch (error) {
-                Logger.error('Transaction sign error --', JSON.stringify(error, null, 4));
-                throw error;
-            }
-        }
-
-        try {
-            this._logger.createEntry({
-                transaction: deserializedTransaction,
-                user,
-                providedBandwidth: shouldProvideBandwidth,
-            });
-        } catch (error) {
-            Logger.error('Logger entry creation error --', JSON.stringify(error, null, 4));
-        }
-
-        try {
-            return await this._sendTransaction(transactionToSend);
-        } catch (error) {
-            Logger.error('Transaction send error --', JSON.stringify(error, null, 4));
+            Logger.error('Transaction deserialization failed:', error);
             throw error;
         }
     }
 
-    async _signTransaction({ transaction, chainId }) {
-        const transactionBW = await signatureProviderBP.sign({
-            chainId,
-            requiredKeys,
-            serializedTransaction: transaction.serializedTransaction,
-        });
+    _isNeedSigning({ actions }) {
+        const provideBwAction = actions.find(
+            ({ account, name, authorization, data }) =>
+                account === 'cyber' &&
+                name === 'providebw' &&
+                authorization.length === 1 &&
+                authorization[0].actor === GLS_PROVIDER_USERNAME &&
+                authorization[0].permission === 'providebw' &&
+                data.provider === GLS_PROVIDER_USERNAME
+        );
 
-        const transactionBoth = {
-            ...transaction,
-            signatures: [...transaction.signatures, ...transactionBW.signatures],
-            serializedTransaction: transaction.serializedTransaction,
-        };
+        if (!provideBwAction) {
+            return false;
+        }
 
-        const { signatures, serializedTransaction } = transactionBoth;
+        for (const action of actions) {
+            if (action === provideBwAction) {
+                continue;
+            }
 
-        return { signatures, serializedTransaction };
+            for (const { actor } of action.authorization) {
+                // Проверяем все экшены, чтобы исключить возможность подписи нашим ключом экшенов кроме providebw
+                // Если находим такой экшен, то выдаем ошибку.
+                if (actor === GLS_PROVIDER_USERNAME) {
+                    throw {
+                        code: 1104,
+                        message:
+                            'Transaction contains action with provider as actor except providebw action',
+                    };
+                }
+            }
+        }
+
+        return true;
+    }
+
+    async _checkWhitelist({ channelId, user }) {
+        let isAllowed = false;
+        try {
+            isAllowed = await this._whitelist.isAllowed({ channelId, user });
+        } catch (error) {
+            Logger.error('Whitelist check failed:', JSON.stringify(error, null, 4));
+            throw error;
+        }
+
+        if (!isAllowed) {
+            throw {
+                code: 1103,
+                message: 'This user is not allowed to require bandwidth',
+            };
+        }
+    }
+
+    async _signTransaction({ signatures, serializedTransaction }, { chainId }) {
+        try {
+            const transactionBW = await signatureProviderBP.sign({
+                chainId,
+                requiredKeys,
+                serializedTransaction,
+            });
+
+            return {
+                signatures: [...signatures, ...transactionBW.signatures],
+                serializedTransaction,
+            };
+        } catch (error) {
+            Logger.error('Transaction sign failed:', JSON.stringify(error, null, 4));
+            throw error;
+        }
+    }
+
+    _logEntry({ user, transaction, isSigned }) {
+        try {
+            this._logger.createEntry({
+                transaction,
+                user,
+                providedBandwidth: isSigned,
+            });
+        } catch (error) {
+            Logger.error('Logger entry creation failed:', error);
+        }
     }
 
     async _sendTransaction({ signatures, serializedTransaction }) {
@@ -133,8 +170,9 @@ class BandwidthProvider extends BasicController {
                 serializedTransaction,
             });
         } catch (error) {
-            Logger.error(error.json);
-            throw error.json;
+            error = error.json || error;
+            Logger.error('Transaction send failed:', error);
+            throw error;
         }
     }
 }
