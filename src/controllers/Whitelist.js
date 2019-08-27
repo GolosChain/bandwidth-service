@@ -2,6 +2,7 @@ const core = require('gls-core-service');
 const BasicController = core.controllers.Basic;
 const Logger = core.utils.Logger;
 const Whitelist = require('../model/Whitelist');
+const env = require('../data/env');
 
 class WhitelistController extends BasicController {
     constructor({ connector, storage }) {
@@ -47,10 +48,12 @@ class WhitelistController extends BasicController {
             return true;
         }
 
-        const inRegService = await this._askRegService({ user });
+        if (env.GLS_REGISTRATION_ENABLED) {
+            const inRegService = await this._askRegService({ user });
 
-        if (!inRegService) {
-            return false;
+            if (!inRegService) {
+                return false;
+            }
         }
 
         // in reg service -> add to mongo and to in-mem
