@@ -12,7 +12,7 @@ class WhitelistController extends BasicController {
 
     async _askRegService({ user }) {
         try {
-            const {isRegistered} = await this.callService('registration', 'isRegistered', {
+            const { isRegistered } = await this.callService('registration', 'isRegistered', {
                 userId: user,
             });
             return isRegistered;
@@ -60,7 +60,7 @@ class WhitelistController extends BasicController {
         return true;
     }
 
-    async banUser(user) {
+    async banUser({ user }) {
         await Whitelist.findOneAndUpdate({ user }, { banned: true });
 
         this._storage.removeFromMemoryDb(user);

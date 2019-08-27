@@ -25,9 +25,18 @@ class Connector extends BasicConnector {
 
         await super.start({
             serverRoutes: {
-                'bandwidth.provide': provider.provideBandwidth.bind(provider),
-                'bandwidth.banUser': whitelist.banUser.bind(whitelist),
-                'bandwidth.notifyOffline': whitelist.handleOffline.bind(whitelist),
+                'bandwidth.provide': {
+                    handler: provider.provideBandwidth,
+                    scope: provider,
+                },
+                'bandwidth.banUser': {
+                    handler: whitelist.banUser,
+                    scope: whitelist,
+                },
+                'bandwidth.notifyOffline': {
+                    handler: whitelist.handleOffline,
+                    scope: whitelist,
+                },
             },
             requiredClients: {
                 registration: env.GLS_REGISTRATION_CONNECT,
