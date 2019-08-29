@@ -58,7 +58,7 @@ class BandwidthProvider extends BasicController {
             if (error.json && error.json.error && error.json.error.details) {
                 throw {
                     code: 500,
-                    message: JSON.stringify(error.json.error.details[1]),
+                    message: JSON.stringify(error.json.error.details[0]),
                 };
             }
 
