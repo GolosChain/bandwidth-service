@@ -57,7 +57,7 @@ class BandwidthProvider extends BasicController {
         } catch (error) {
             if (error.json && error.json.error) {
                 throw {
-                    code: 500,
+                    code: 1003,
                     message: 'Unexpected blockchain error',
                     data: error.json
                 };
