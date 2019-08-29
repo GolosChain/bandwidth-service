@@ -170,11 +170,7 @@ class BandwidthProvider extends BasicController {
                 serializedTransaction,
             });
         } catch (error) {
-            error = error.json || error;
-            Logger.error('Transaction send failed:', JSON.stringify(error, null,4 ));
-            if(error.error && error.error.details && error.error.details[0]){
-                throw error.error.details[0]
-            }
+            Logger.error('Transaction send failed:',error, null,4 );
             throw error;
         }
     }
