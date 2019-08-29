@@ -55,6 +55,14 @@ class BandwidthProvider extends BasicController {
 
             return await this._sendTransaction(finalTrx);
         } catch (error) {
+
+            if(error.json && error.json.error && error.json.error.details){
+                throw {
+                    code: 500,
+                    message: JSON.stringify(error.json.error.details)[1])
+                }
+            }
+
             throw {
                 code: 500,
                 message: 'Failed to transact -- ' + error
