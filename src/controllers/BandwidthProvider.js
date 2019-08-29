@@ -55,10 +55,11 @@ class BandwidthProvider extends BasicController {
 
             return await this._sendTransaction(finalTrx);
         } catch (error) {
-            if (error.json && error.json.error && error.json.error.details) {
+            if (error.json && error.json.error) {
                 throw {
                     code: 500,
-                    message: JSON.stringify(error.json.error.details[0]),
+                    message: 'Unexpected blockchain error',
+                    data: JSON.stringify(error.json)
                 };
             }
 
