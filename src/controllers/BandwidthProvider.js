@@ -47,26 +47,25 @@ class BandwidthProvider extends BasicController {
             let finalTrx = rawTrx;
 
             if (isNeedSign) {
-                await this._checkWhitelist({user, channelId});
-                finalTrx = await this._signTransaction(rawTrx, {chainId});
+                await this._checkWhitelist({ user, channelId });
+                finalTrx = await this._signTransaction(rawTrx, { chainId });
             }
 
-            this._logEntry({user, transaction: trx, isSigned: isNeedSign});
+            this._logEntry({ user, transaction: trx, isSigned: isNeedSign });
 
             return await this._sendTransaction(finalTrx);
         } catch (error) {
-
-            if(error.json && error.json.error && error.json.error.details){
+            if (error.json && error.json.error && error.json.error.details) {
                 throw {
                     code: 500,
-                    message: JSON.stringify(error.json.error.details)[1])
-                }
+                    message: JSON.stringify(error.json.error.details[1]),
+                };
             }
 
             throw {
                 code: 500,
-                message: 'Failed to transact -- ' + error
-            }
+                message: 'Failed to transact -- ' + error,
+            };
         }
     }
 
