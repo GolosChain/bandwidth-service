@@ -1,39 +1,13 @@
 {
   "name": "badwidth-service",
   "version": "1.0.0",
-  "description": "",
+  "description": "Bandwidth provider service",
   "main": "./src/Main.js",
   "scripts": {
     "start": "node src/index.js"
   },
   "author": "golos.io",
   "license": "GPL-3.0",
-  "dependencies": {
-    "@types/node-fetch": "^2.1.4",
-    "@types/text-encoding": "0.0.35",
-    "cyberwayjs": "^20.0.0-beta7",
-    "gls-core-service": "^3.25.2",
-    "node-fetch": "^2.3.0",
-    "text-encoding": "^0.7.0"
-  },
-  "prettier": {
-    "singleQuote": true,
-    "tabWidth": 4,
-    "semi": true,
-    "trailingComma": "es5",
-    "printWidth": 100,
-    "overrides": [
-      {
-        "files": [
-          "*.yml",
-          "*.json"
-        ],
-        "options": {
-          "tabWidth": 2
-        }
-      }
-    ]
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/GolosChain/bandwidth-service.git"
@@ -42,6 +16,14 @@
     "url": "https://github.com/GolosChain/bandwidth-service/issues"
   },
   "homepage": "https://github.com/GolosChain/bandwidth-service#readme",
+  "dependencies": {
+    "@types/node-fetch": "^2.1.4",
+    "@types/text-encoding": "0.0.35",
+    "cyberwayjs": "^20.0.0-beta8",
+    "gls-core-service": "^3.25.2",
+    "node-fetch": "^2.3.0",
+    "text-encoding": "^0.7.0"
+  },
   "devDependencies": {
     "@types/ws": "^6.0.1",
     "jayson": "^2.1.1",
