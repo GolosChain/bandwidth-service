@@ -116,14 +116,14 @@ class BandwidthProvider extends BasicController {
     }
 
     _verifyActionsAndCheckIsNeedProviding({ actions }) {
-        const provideBwAction = actions.find(this._isBWProvideAction);
+        const provideBwActions = actions.filter(this._isBWProvideAction);
 
-        if (!provideBwAction) {
+        if (provideBwActions.length === 0) {
             return false;
         }
 
         for (const action of actions) {
-            if (action === provideBwAction) {
+            if (provideBwActions.includes(action)) {
                 continue;
             }
 
@@ -236,7 +236,7 @@ class BandwidthProvider extends BasicController {
     }
 
     _checkProposalRestrictionsAndGetAction({ actions }, user) {
-        let targetActions = actions.filter(this._isBWProvideAction);
+        const targetActions = actions.filter(action => !this._isBWProvideAction(action));
 
         if (targetActions.length !== 1) {
             throw {
@@ -250,7 +250,7 @@ class BandwidthProvider extends BasicController {
 
         const [targetAction] = targetActions;
 
-        const contractMethod = `${targetAction.code}::${targetAction.action}`;
+        const contractMethod = `${targetAction.account}::${targetAction.name}`;
 
         if (!PROPOSAL_ALLOWED_CONTRACTS.includes(contractMethod)) {
             throw {
