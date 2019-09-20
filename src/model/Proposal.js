@@ -21,7 +21,7 @@ module.exports = MongoDB.makeModel(
             },
         },
         action: {
-            type: String,
+            type: Object,
             required: true,
         },
         serializedTransaction: {
@@ -43,6 +43,8 @@ module.exports = MongoDB.makeModel(
             {
                 fields: {
                     'waitingFor.userId': 1,
+                    'action.account': 1,
+                    'action.name': 1,
                 },
             },
             {
