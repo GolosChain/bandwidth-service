@@ -22,7 +22,7 @@ class Storage extends BasicService {
         try {
             this._cleanup();
         } catch (error) {
-            Logger.error(`Cleanup error - ${error.stack}`);
+            Logger.error('Cleanup error:', error);
         }
     }
 

@@ -224,8 +224,8 @@ class BandwidthProvider extends BasicController {
                 userId: auth.actor,
                 permission: auth.permission,
             },
-            expirationTime: new Date(Date.now() + 3600000),
-            action: JSON.stringify(action),
+            expirationTime: new Date(trx.expiration + 'Z'),
+            action,
             serializedTransaction: transaction.serializedTransaction,
             signatures: finalTrx.signatures,
         });
@@ -277,10 +277,12 @@ class BandwidthProvider extends BasicController {
         };
     }
 
-    async getProposals({ auth: { user } }) {
+    async getProposals({ auth: { user }, params: { contract, method } }) {
         const items = await ProposalModel.find(
             {
                 'waitingFor.userId': user,
+                'action.account': contract,
+                'action.name': method,
                 expirationTime: {
                     $gt: new Date(),
                 },
@@ -297,14 +299,22 @@ class BandwidthProvider extends BasicController {
             }
         );
 
-        const { usernames } = await this.callService('prism', 'getUsernames', {
-            userIds: items.map(({ initiatorId }) => initiatorId),
-        });
+        let usernames = {};
+
+        try {
+            const results = await this.callService('prism', 'getUsernames', {
+                userIds: items.map(({ initiatorId }) => initiatorId),
+            });
+
+            usernames = results.usernames;
+        } catch (err) {
+            Logger.warn('getUsernames failed:', err.message);
+        }
 
         for (const item of items) {
-            item.id = item._id;
+            item.proposalId = item._id;
             item._id = undefined;
-            item.initiatorUsername = usernames[item.initiatorId];
+            item.initiatorUsername = usernames[item.initiatorId] || null;
         }
 
         return {
