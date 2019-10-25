@@ -299,22 +299,25 @@ class BandwidthProvider extends BasicController {
             }
         );
 
-        let usernames = {};
+        if (items.length) {
+            let usernames = {};
 
-        try {
-            const results = await this.callService('prism', 'getUsernames', {
-                userIds: items.map(({ initiatorId }) => initiatorId),
-            });
+            try {
+                const results = await this.callService('prism', 'getUsernames', {
+                    userIds: items.map(({ initiatorId }) => initiatorId),
+                    app: 'gls',
+                });
 
-            usernames = results.usernames;
-        } catch (err) {
-            Logger.warn('getUsernames failed:', err.message);
-        }
+                usernames = results.usernames;
+            } catch (err) {
+                Logger.warn('getUsernames failed:', err.message);
+            }
 
-        for (const item of items) {
-            item.proposalId = item._id;
-            item._id = undefined;
-            item.initiatorUsername = usernames[item.initiatorId] || null;
+            for (const item of items) {
+                item.proposalId = item._id;
+                item._id = undefined;
+                item.initiatorUsername = usernames[item.initiatorId] || null;
+            }
         }
 
         return {
