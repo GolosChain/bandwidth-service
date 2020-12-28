@@ -8,13 +8,17 @@ const env = require('../data/env');
 class Connector extends BasicConnector {
     constructor() {
         super();
+
         this._storageService = new StorageService();
         this.addNested(this._storageService);
+
         this._whitelistController = new Whitelist({
             connector: this,
             storage: this._storageService,
         });
+
         this._bandwidthProvider = new BandwidthProvider({
+            connector: this,
             whitelist: this._whitelistController,
         });
     }
@@ -25,11 +29,33 @@ class Connector extends BasicConnector {
 
         await super.start({
             serverRoutes: {
-                'bandwidth.provide': provider.provideBandwidth.bind(provider),
-                'bandwidth.banUser': whitelist.banUser.bind(whitelist),
-                'bandwidth.notifyOffline': whitelist.handleOffline.bind(whitelist),
+                'bandwidth.provide': {
+                    handler: provider.provideBandwidth,
+                    scope: provider,
+                },
+                'bandwidth.createProposal': {
+                    handler: provider.createProposal,
+                    scope: provider,
+                },
+                'bandwidth.getProposals': {
+                    handler: provider.getProposals,
+                    scope: provider,
+                },
+                'bandwidth.signAndExecuteProposal': {
+                    handler: provider.signAndExecuteProposal,
+                    scope: provider,
+                },
+                'bandwidth.banUser': {
+                    handler: whitelist.banUser,
+                    scope: whitelist,
+                },
+                'bandwidth.notifyOffline': {
+                    handler: whitelist.handleOffline,
+                    scope: whitelist,
+                },
             },
             requiredClients: {
+                prism: env.GLS_PRISM_CONNECT,
                 registration: env.GLS_REGISTRATION_CONNECT,
             },
         });
